@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Custom Soundboard - Level 5 ver5.3</title>
+  <link rel="stylesheet" href="soundboard_level5_ver5.3.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>SOUNDBOARD <span class="badge-lv">LV.5 ver5.3</span></h1>
+    <div class="header-controls">
+      <button id="export-backup-btn" class="btn-secondary" title="全データをJSONファイルとして書き出す">📤 保存</button>
+      <button id="import-backup-btn" class="btn-secondary" title="JSONファイルと現在のデータを賢くマージまたは上書きする">📥 読込・統合</button>
+      <input type="file" id="import-file-input" accept=".json" class="hidden" />
+      <button id="stop-all-btn" class="btn-danger">■ 全停止</button>
+      <button id="toggle-edit-btn" class="btn-secondary">⚙ 編集: OFF</button>
+    </div>
+  </header>
+
+  <nav class="category-bar">
+    <div id="category-tabs" class="category-tabs"></div>
+    <button id="add-category-btn" class="btn-add-cat" title="カテゴリ追加">＋</button>
+  </nav>
+
+  <div id="edit-mode-banner" class="edit-mode-banner hidden">
+    <span>⚙ 編集モード中：PCはドラッグ＆ドロップ、スマホは「◀ / ▶」ボタンで順番変更・タップで詳細編集</span>
+  </div>
+
+  <main class="board-container">
+    <div id="sound-grid" class="sound-grid"></div>
+    <button id="open-add-modal-btn" class="add-sound-card">
+      <span class="plus-icon">＋</span>
+      <span>音源を追加（動画・音声対応）</span>
+    </button>
+  </main>
+
+  <div id="sound-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header-sticky">
+        <h2 id="modal-title">音源を追加 <span class="ver-tag">ver5.3</span></h2>
+        <button type="button" id="close-modal-x-btn" class="btn-modal-close" aria-label="閉じる">✕</button>
+      </div>
+
+      <div class="modal-scroll-body">
+        <div class="form-group" id="file-input-group">
+          <label>音声 / 動画ファイル (MP3, WAV, M4A, MP4, MOV など)</label>
+          <input type="file" id="audio-file-input" accept="audio/*,video/*" />
+          <div class="file-hint-text">※動画ファイルを選んだ場合、音声トラックが自動抽出されます</div>
+        </div>
+
+        <div class="form-group">
+          <label>ボタン名</label>
+          <input type="text" id="btn-name-input" placeholder="例：デュエプレBGM / 変身ベルト" />
+        </div>
+
+        <div class="form-group">
+          <label>ボタン画像（任意・PNG / JPG / GIF）</label>
+          <div class="image-upload-row">
+            <input type="file" id="btn-image-input" accept="image/*" />
+            <button type="button" id="clear-image-btn" class="btn-mini btn-del hidden">画像解除</button>
+          </div>
+          <div id="btn-image-preview-box" class="image-preview-box hidden">
+            <img id="btn-image-preview" src="" alt="ボタン画像プレビュー" />
+            <span class="image-preview-hint">ボタンの背景として表示されます</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ボタンの色（ベース色）</label>
+          <div class="color-picker-row">
+            <input type="color" id="btn-color-input" value="#d32f2f" />
+            <div class="color-presets">
+              <button type="button" class="color-swatch" data-color="#d32f2f" style="background:#d32f2f"></button>
+              <button type="button" class="color-swatch" data-color="#1976d2" style="background:#1976d2"></button>
+              <button type="button" class="color-swatch" data-color="#388e3c" style="background:#388e3c"></button>
+              <button type="button" class="color-swatch" data-color="#fbc02d" style="background:#fbc02d"></button>
+              <button type="button" class="color-swatch" data-color="#7b1fa2" style="background:#7b1fa2"></button>
+              <button type="button" class="color-swatch" data-color="#455a64" style="background:#455a64"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>音量: <span id="volume-label">100</span>%</label>
+          <input type="range" id="btn-volume-input" min="0" max="150" value="100" />
+        </div>
+
+        <fieldset class="form-fieldset">
+          <legend>再生モード ＆ マルチSP・フェーズ設定</legend>
+          
+          <div class="form-group">
+            <label>再生挙動タイプ</label>
+            <select id="btn-playback-type" class="form-select">
+              <option value="normal" selected>通常（ワンショット / 単発）</option>
+              <option value="loop">単一ループ（部分的ループ対応）</option>
+              <option value="seamless">スマートSP変調（各フェーズ個別切抜・部分ループ対応）</option>
+            </select>
+          </div>
+
+          <div class="hidden" id="single-loop-box">
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" id="btn-partial-loop-input" />
+                部分的ループを使用する
+              </label>
+            </div>
+            <div class="range-inputs-row hidden" id="single-loop-inputs">
+              <div class="time-control-box">
+                <label class="tag-start">ループ開始 (秒)</label>
+                <input type="number" id="single-loop-start" step="0.01" min="0" value="0.00" />
+                <div class="nudge-btns">
+                  <button type="button" class="btn-nudge" data-target="singleStart" data-delta="-0.1">-0.1</button>
+                  <button type="button" class="btn-nudge" data-target="singleStart" data-delta="-0.01">-0.01</button>
+                  <button type="button" class="btn-nudge" data-target="singleStart" data-delta="0.01">+0.01</button>
+                  <button type="button" class="btn-nudge" data-target="singleStart" data-delta="0.1">+0.1</button>
+                </div>
+              </div>
+              <div class="time-control-box">
+                <label class="tag-end">ループ終了 (秒)</label>
+                <input type="number" id="single-loop-end" step="0.01" min="0" value="0.00" />
+                <div class="nudge-btns">
+                  <button type="button" class="btn-nudge" data-target="singleEnd" data-delta="-0.1">-0.1</button>
+                  <button type="button" class="btn-nudge" data-target="singleEnd" data-delta="-0.01">-0.01</button>
+                  <button type="button" class="btn-nudge" data-target="singleEnd" data-delta="0.01">+0.01</button>
+                  <button type="button" class="btn-nudge" data-target="singleEnd" data-delta="0.1">+0.1</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden" id="seamless-phases-box">
+            <div class="seamless-info-text">
+              ※各フェーズごとに個別の「再生範囲」と「ループ範囲」を設定できます。
+            </div>
+            
+            <div class="phase-toolbar">
+              <div id="phase-tabs-header" class="phase-tabs-header"></div>
+              <div class="phase-manage-btns">
+                <button type="button" id="add-phase-btn" class="btn-mini btn-add" title="フェーズ追加">＋追加</button>
+                <button type="button" id="remove-phase-btn" class="btn-mini btn-del" title="選択中のフェーズを削除">－削除</button>
+              </div>
+            </div>
+
+            <div class="phase-inputs-container">
+              <div class="phase-section-badge" id="current-phase-label">フェーズ 1 の個別設定</div>
+
+              <div class="sub-section-box" style="margin-top:0; margin-bottom:8px;">
+                <div class="sub-title">フェーズ再生範囲（切り出し範囲）</div>
+                <div class="range-inputs-row">
+                  <div class="time-control-box">
+                    <label class="tag-trim">切抜開始 (秒)</label>
+                    <input type="number" id="phase-trim-start-input" step="0.01" min="0" value="0.00" />
+                    <div class="nudge-btns">
+                      <button type="button" class="btn-nudge" data-target="phaseTrimStart" data-delta="-0.1">-0.1</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimStart" data-delta="-0.01">-0.01</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimStart" data-delta="0.01">+0.01</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimStart" data-delta="0.1">+0.1</button>
+                    </div>
+                  </div>
+                  <div class="time-control-box">
+                    <label class="tag-trim">切抜終了 (秒)</label>
+                    <input type="number" id="phase-trim-end-input" step="0.01" min="0" value="0.00" />
+                    <div class="nudge-btns">
+                      <button type="button" class="btn-nudge" data-target="phaseTrimEnd" data-delta="-0.1">-0.1</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimEnd" data-delta="-0.01">-0.01</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimEnd" data-delta="0.01">+0.01</button>
+                      <button type="button" class="btn-nudge" data-target="phaseTrimEnd" data-delta="0.1">+0.1</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group checkbox-group" style="margin-bottom:6px;">
+                <label>
+                  <input type="checkbox" id="phase-partial-loop-input" />
+                  このフェーズで部分的ループを使用する
+                </label>
+              </div>
+
+              <div class="range-inputs-row" id="phase-loop-inputs-row">
+                <div class="time-control-box">
+                  <label class="tag-phase-start">ループ開始 (秒)</label>
+                  <input type="number" id="phase-start-input" step="0.01" min="0" value="0.00" />
+                  <div class="nudge-btns">
+                    <button type="button" class="btn-nudge" data-target="phaseStart" data-delta="-0.1">-0.1</button>
+                    <button type="button" class="btn-nudge" data-target="phaseStart" data-delta="-0.01">-0.01</button>
+                    <button type="button" class="btn-nudge" data-target="phaseStart" data-delta="0.01">+0.01</button>
+                    <button type="button" class="btn-nudge" data-target="phaseStart" data-delta="0.1">+0.1</button>
+                  </div>
+                </div>
+                <div class="time-control-box">
+                  <label class="tag-phase-end">ループ終了 (秒)</label>
+                  <input type="number" id="phase-end-input" step="0.01" min="0" value="0.00" />
+                  <div class="nudge-btns">
+                    <button type="button" class="btn-nudge" data-target="phaseEnd" data-delta="-0.1">-0.1</button>
+                    <button type="button" class="btn-nudge" data-target="phaseEnd" data-delta="-0.01">-0.01</button>
+                    <button type="button" class="btn-nudge" data-target="phaseEnd" data-delta="0.01">+0.01</button>
+                    <button type="button" class="btn-nudge" data-target="phaseEnd" data-delta="0.1">+0.1</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sp-manager-box">
+                <div class="sp-manager-header">
+                  <span class="tag-sp">⚡ SP（切り替えポイント）一覧</span>
+                  <button type="button" id="add-sp-btn" class="btn-mini btn-sp-add">＋ SP追加</button>
+                </div>
+                <div id="sp-list-container" class="sp-list-container"></div>
+                <div class="sp-selected-controls">
+                  <span class="sp-edit-label">選択中SPの微調整:</span>
+                  <div class="nudge-btns">
+                    <button type="button" class="btn-nudge" data-target="selectedSP" data-delta="-0.1">-0.1</button>
+                    <button type="button" class="btn-nudge" data-target="selectedSP" data-delta="-0.01">-0.01</button>
+                    <button type="button" class="btn-nudge" data-target="selectedSP" data-delta="0.01">+0.01</button>
+                    <button type="button" class="btn-nudge" data-target="selectedSP" data-delta="0.1">+0.1</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="waveform-editor-container" id="waveform-editor-container" style="margin-top: 10px;">
+            <div class="waveform-header">
+              <span>再生: <strong id="wave-current-time" class="live-time">0s</strong> / <strong id="wave-total-duration">0.00</strong>s</span>
+            </div>
+
+            <div class="wave-zoom-bar">
+              <span class="zoom-label">🔍 波形拡大: <strong id="wave-zoom-label">1.0x</strong></span>
+              <input type="range" id="wave-zoom-slider" min="1" max="12" step="0.5" value="1" />
+              <button type="button" id="wave-zoom-reset-btn" class="btn-mini btn-secondary">1x</button>
+            </div>
+
+            <div class="canvas-viewport-frame" id="canvas-viewport-frame">
+              <canvas id="waveform-canvas" width="520" height="135"></canvas>
+              <div id="waveform-placeholder" class="waveform-placeholder">音声ファイルを選択すると波形が表示されます</div>
+            </div>
+
+            <div class="wave-pan-bar hidden" id="wave-pan-bar">
+              <span class="pan-label">↔ 表示位置:</span>
+              <input type="range" id="wave-pan-slider" min="0" max="1" step="0.001" value="0" />
+              <button type="button" id="wave-center-playhead-btn" class="btn-mini btn-secondary">🎯 追従</button>
+            </div>
+
+            <div class="drag-mode-bar">
+              <span>波形操作:</span>
+              <label><input type="radio" name="drag-target" value="playhead" checked /> <span class="tag-playhead">再生バー</span></label>
+              <label><input type="radio" name="drag-target" value="pan" /> <span class="tag-pan">↔ スクロール</span></label>
+              <label><input type="radio" name="drag-target" value="trimStart" /> <span class="tag-trim">切抜始</span></label>
+              <label><input type="radio" name="drag-target" value="trimEnd" /> <span class="tag-trim">切抜終</span></label>
+              <label id="drag-loop-start-label"><input type="radio" name="drag-target" value="loopStart" /> <span class="tag-start">ループ始</span></label>
+              <label id="drag-loop-end-label"><input type="radio" name="drag-target" value="loopEnd" /> <span class="tag-end">ループ終</span></label>
+              <label id="drag-sp-label"><input type="radio" name="drag-target" value="selectedSP" /> <span class="tag-sp">選択SP</span></label>
+            </div>
+
+            <div class="sub-section-box" id="global-trim-box">
+              <div class="sub-title">全体トリミング範囲</div>
+              <div class="range-inputs-row">
+                <div>
+                  <label class="tag-trim">切抜開始 (秒)</label>
+                  <input type="number" id="btn-trim-start" step="0.01" min="0" value="0.00" />
+                </div>
+                <div>
+                  <label class="tag-trim">切抜終了 (秒)</label>
+                  <input type="number" id="btn-trim-end" step="0.01" min="0" value="0.00" />
+                </div>
+              </div>
+            </div>
+
+            <div id="preview-seek-box" class="preview-seek-box hidden">
+              <label for="preview-start-mode">試聴開始:</label>
+              <select id="preview-start-mode" class="form-select seek-select">
+                <option value="trimStart">0. フェーズ切抜開始から再生</option>
+                <option value="loopStart" selected>1. ループ開始から再生</option>
+                <option value="beforeSP">2. 選択SPの3秒前から再生</option>
+                <option value="beforeLoopEnd">3. ループ終了の3秒前から再生</option>
+              </select>
+            </div>
+
+            <div class="preview-controls">
+              <button type="button" id="preview-play-btn" class="btn-preview">▶ 全体試聴</button>
+              <button type="button" id="preview-loop-btn" class="btn-preview btn-loop-test hidden">↻ 選択位置試聴</button>
+              <button type="button" id="preview-sp-btn" class="btn-preview btn-sp-test hidden">⚡ SP試聴 [OFF]</button>
+              <button type="button" id="preview-pause-btn" class="btn-preview btn-pause-test" disabled>⏸ 一時停止</button>
+              <button type="button" id="preview-stop-btn" class="btn-danger btn-sm">■ 停止</button>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-fieldset">
+          <legend>上書きルール</legend>
+          <div class="form-group">
+            <label>上書きモード</label>
+            <select id="btn-overwrite-mode" class="form-select">
+              <option value="none">通常（重複可能）</option>
+              <option value="all">全体上書き（他の音をすべて停止して再生）</option>
+              <option value="conditional">条件付き上書き（指定した音だけ停止して再生）</option>
+            </select>
+          </div>
+          <div class="form-group hidden" id="target-sound-group">
+            <label>停止させる対象のボタン</label>
+            <select id="btn-target-sound" class="form-select"></select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="btn-disable-overwrite" />
+              上書き無効（他の全体上書きの影響を受けない）
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="modal-actions-sticky">
+        <button type="button" id="delete-sound-btn" class="btn-danger hidden">削除</button>
+        <div class="right-actions">
+          <button type="button" id="cancel-modal-btn" class="btn-secondary">キャンセル</button>
+          <button type="button" id="save-sound-btn" class="btn-primary">💾 保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="import-mode-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header-sticky">
+        <h2>📥 バックアップの読み込み方法</h2>
+      </div>
+      <div class="modal-scroll-body" style="text-align: center; padding: 20px;">
+        <p style="font-size: 0.9rem; color: #ddd; margin-bottom: 20px; line-height: 1.5;">
+          ファイルから読み込んだデータをどのように反映しますか？
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button type="button" id="import-merge-btn" class="btn-primary" style="padding: 12px; font-size: 0.95rem;">
+            🔗 スマート・マージ（追加・統合する）<br>
+            <span style="font-size: 0.75rem; font-weight: normal; color: #e0f7fa;">スマホとPCの新規ボタンをどちらも残して合体させます</span>
+          </button>
+          <button type="button" id="import-overwrite-btn" class="btn-danger" style="padding: 12px; font-size: 0.95rem;">
+            ⚠️ 完全上書きする<br>
+            <span style="font-size: 0.75rem; font-weight: normal; color: #ffcdd2;">現在のデータを消去し、ファイルの状態に完全に置き換えます</span>
+          </button>
+          <button type="button" id="import-cancel-btn" class="btn-secondary" style="padding: 10px;">
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="soundboard_level5_ver5.3.js"></script>
+</body>
+</html>
