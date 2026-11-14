@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Custom Soundboard - Level 5 ver5.4</title>
-  <link rel="stylesheet" href="soundboard_level5_ver5.4.css" />
+  <title>Custom Soundboard - Level 5 ver5.3</title>
+  <link rel="stylesheet" href="soundboard_level5_ver5.3.css" />
 </head>
 <body>
   <header class="app-header">
-    <h1>SOUNDBOARD <span class="badge-lv">LV.5 ver5.4</span></h1>
+    <h1>SOUNDBOARD <span class="badge-lv">LV.5 ver5.3</span></h1>
     <div class="header-controls">
       <button id="export-backup-btn" class="btn-secondary" title="全データをJSONファイルとして書き出す">📤 保存</button>
       <button id="import-backup-btn" class="btn-secondary" title="JSONファイルと現在のデータを賢くマージまたは上書きする">📥 読込・統合</button>
@@ -33,31 +33,22 @@
     <div id="sound-grid" class="sound-grid"></div>
     <button id="open-add-modal-btn" class="add-sound-card">
       <span class="plus-icon">＋</span>
-      <span>音源を追加（HEVC動画・音声対応 ⚡自動変換付）</span>
+      <span>音源を追加（動画・音声対応）</span>
     </button>
   </main>
-
-  <!-- FFmpeg 変換中ローディングモーダル -->
-  <div id="ffmpeg-loading-modal" class="modal hidden">
-    <div class="modal-content" style="max-width: 360px; text-align: center; padding: 24px;">
-      <div class="ffmpeg-spinner"></div>
-      <h3 style="margin: 14px 0 6px 0; font-size: 1.0rem; color: #fff;">メディアを変換中...</h3>
-      <p id="ffmpeg-status-text" style="font-size: 0.8rem; color: #ffb74d; margin: 0;">iPhoneの動画(HEVC)を解析しています</p>
-    </div>
-  </div>
 
   <div id="sound-modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header-sticky">
-        <h2 id="modal-title">音源を追加 <span class="ver-tag">ver5.4</span></h2>
+        <h2 id="modal-title">音源を追加 <span class="ver-tag">ver5.3</span></h2>
         <button type="button" id="close-modal-x-btn" class="btn-modal-close" aria-label="閉じる">✕</button>
       </div>
 
       <div class="modal-scroll-body">
         <div class="form-group" id="file-input-group">
-          <label>音声 / 動画ファイル (HEVC/MOV, MP4, MP3, WAV, M4A など)</label>
-          <input type="file" id="audio-file-input" accept="audio/*,video/*,.mov,.HEIC,.heic" />
-          <div class="file-hint-text">⚡ iPhoneのHEVC動画(.mov)も自動で音声抽出・変換されます</div>
+          <label>音声 / 動画ファイル (MP3, WAV, M4A, MP4, MOV など)</label>
+          <input type="file" id="audio-file-input" accept="audio/*,video/*" />
+          <div class="file-hint-text">※動画ファイルを選んだ場合、音声トラックが自動抽出されます</div>
         </div>
 
         <div class="form-group">
@@ -357,9 +348,6 @@
     </div>
   </div>
 
-  <!-- FFmpeg.wasm CDN読込 -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.js"></script>
-  <script src="soundboard_level5_ver5.4.js"></script>
+  <script src="soundboard_level5_ver5.3.js"></script>
 </body>
 </html>
